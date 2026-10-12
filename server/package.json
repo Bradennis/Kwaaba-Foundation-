@@ -2,7 +2,11 @@
   "name": "kwaaba-server",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
+    "start": "node index.js",
     "dev": "nodemon index.js",
     "db:init": "node -e \"import('./db.js').then(m => m.initDb())\""
   },

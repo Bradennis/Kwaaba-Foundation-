@@ -1,0 +1,26 @@
+# Render Blueprint — backend API (the frontend is deployed on Vercel from client/)
+services:
+  - type: web
+    name: kwaaba-foundation-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.2
+      # Origin allowed by CORS — the Vercel production URL, no trailing slash
+      - key: FRONTEND_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

@@ -8,7 +8,9 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '.env');
 const result = dotenv.config({ path: envPath });
 
-if (result.error) {
+if (result.error?.code === 'ENOENT') {
+  // No .env file (e.g. on Render) — variables come from the host environment
+} else if (result.error) {
   console.error('Failed to load .env file:', result.error.message);
 } else {
   console.log('.env loaded from', envPath);

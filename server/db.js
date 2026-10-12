@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, '..', 'kwaaba.db');
+// DB_PATH lets production point at a persistent disk (e.g. /var/data/kwaaba.db)
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'kwaaba.db');
 
 const COLLECTIONS = [
   'slides', 'stats', 'programs', 'board', 'team',
