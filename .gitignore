@@ -1,0 +1,28 @@
+﻿# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment
+client/.env
+server/.env
+
+# Build output
+dist/
+client/dist/
+
+# Vite
+.vite/
+
+# Database
+kwaaba.db
+kwaaba.db-shm
+kwaaba.db-wal
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

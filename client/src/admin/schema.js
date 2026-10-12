@@ -1,0 +1,163 @@
+// Field schema per collection, driving the generic admin editor.
+const TEXT = (label) => ({ label, type: 'text' })
+const TEXTAREA = (label, rows = 5) => ({ label, type: 'textarea', rows })
+const NUM = (label) => ({ label, type: 'number' })
+const DATE = (label) => ({ label, type: 'date' })
+const SEL = (label, options) => ({ label, type: 'select', options })
+const IMG = (label) => ({ label, type: 'text', hint: 'Upload via button or paste URL', image: true })
+
+export const SCHEMA = {
+  slides: {
+    label: 'Hero Slides',
+    icon: '🎞️',
+    fields: [TEXT('Kicker'), TEXT('Title'), TEXTAREA('Subtitle', 3), IMG('Image'), TEXT('CTA text'), TEXT('CTA link')],
+    keys: ['kicker', 'title', 'sub', 'image', 'ctaText', 'ctaLink'],
+    titleKey: 'title',
+    preview: 'image',
+    blank: { kicker: '', title: '', sub: '', image: '/images/event-63.jpg', ctaText: 'Learn More', ctaLink: '/about' },
+  },
+  stats: {
+    label: 'Impact Stats',
+    icon: '📊',
+    fields: [TEXT('Label'), NUM('Value'), TEXT('Suffix (e.g. +)')],
+    keys: ['label', 'value', 'suffix'],
+    titleKey: 'label',
+    blank: { label: '', value: 0, suffix: '+' },
+  },
+  programs: {
+    label: 'Programs',
+    icon: '🧩',
+    fields: [
+      TEXT('Title'),
+      TEXT('Slug (url)'),
+      SEL('Category', ['Health', 'Socio-Economic Empowerment', 'Sustainability']),
+      SEL('Icon', ['heart', 'medical', 'rise', 'book', 'hands', 'leaf']),
+      IMG('Image'),
+      TEXTAREA('Excerpt', 3),
+      TEXTAREA('Body (blank line = new paragraph; wrap in “ ” to render as quote)', 10),
+    ],
+    keys: ['title', 'slug', 'category', 'icon', 'image', 'excerpt', 'body'],
+    titleKey: 'title',
+    preview: 'image',
+    blank: { title: '', slug: '', category: 'Health', icon: 'heart', image: '/images/event-76.jpg', excerpt: '', body: '' },
+  },
+  board: {
+    label: 'Board of Directors',
+    icon: '🏛️',
+    fields: [TEXT('Name'), TEXT('Role'), IMG('Photo'), TEXTAREA('Bio', 6)],
+    keys: ['name', 'role', 'photo', 'bio'],
+    titleKey: 'name',
+    preview: 'photo',
+    blank: { name: '', role: 'Board Member', photo: '/images/mks.jpg', bio: '' },
+  },
+  team: {
+    label: 'Team & Interns',
+    icon: '👥',
+    fields: [TEXT('Name'), TEXT('Role'), TEXT('Country'), IMG('Photo'), TEXTAREA('Bio', 4)],
+    keys: ['name', 'role', 'country', 'photo', 'bio'],
+    titleKey: 'name',
+    preview: 'photo',
+    blank: { name: '', role: '', country: 'Ghana', photo: '/images/mks.jpg', bio: '' },
+  },
+  events: {
+    label: 'Events',
+    icon: '📅',
+    fields: [
+      TEXT('Title'), DATE('Date'), SEL('Status', ['upcoming', 'past']),
+      TEXT('Location'), IMG('Image'), TEXTAREA('Description', 3),
+    ],
+    keys: ['title', 'date', 'status', 'location', 'image', 'description'],
+    titleKey: 'title',
+    preview: 'image',
+    blank: { title: '', date: new Date().toISOString().slice(0, 10), status: 'upcoming', location: 'Accra, Ghana', image: '/images/march-0221.jpg', description: '' },
+  },
+  posts: {
+    label: 'News & Media Mentions',
+    icon: '📰',
+    fields: [
+      SEL('Type', ['news', 'media']), TEXT('Title'), DATE('Date'), IMG('Image'), TEXTAREA('Excerpt', 2),
+    ],
+    keys: ['type', 'title', 'date', 'image', 'excerpt'],
+    titleKey: 'title',
+    preview: 'image',
+    blank: { type: 'news', title: '', date: new Date().toISOString().slice(0, 10), image: '/images/edu-0110.jpg', excerpt: '' },
+  },
+  gallery: {
+    label: 'Gallery Photos',
+    icon: '🖼️',
+    fields: [IMG('Image URL'), TEXT('Caption')],
+    keys: ['src', 'caption'],
+    titleKey: 'caption',
+    preview: 'src',
+    blank: { src: '/images/event-63.jpg', caption: '' },
+  },
+  newsletters: {
+    label: 'Newsletters',
+    icon: '📄',
+    fields: [TEXT('Title'), NUM('Year'), TEXT('File URL')],
+    keys: ['title', 'year', 'url'],
+    titleKey: 'title',
+    blank: { title: 'Dua Pa Quarterly Newsletter', year: 2026, url: '#' },
+  },
+  quotes: {
+    label: 'Quote Marquee',
+    icon: '💬',
+    fields: [TEXTAREA('Quote', 2), TEXT('Author')],
+    keys: ['text', 'author'],
+    titleKey: 'author',
+    blank: { text: '', author: '' },
+  },
+  photoAlbums: {
+    label: 'Photo Albums',
+    icon: '📁',
+    fields: [
+      TEXT('Album Title'),
+      TEXT('Slug (url)'),
+      DATE('Event Date'),
+      IMG('Album Thumbnail'),
+      TEXTAREA('Description', 3),
+    ],
+    keys: ['title', 'slug', 'date', 'thumbnail', 'description'],
+    titleKey: 'title',
+    preview: 'thumbnail',
+    blank: { title: '', slug: '', date: new Date().toISOString().slice(0, 10), thumbnail: '/images/event-63.jpg', description: '' },
+  },
+  photos: {
+    label: 'Photos',
+    icon: '📷',
+    fields: [
+      TEXT('Title / Caption'),
+      IMG('Photo Image'),
+      TEXT('Album ID (e.g. pa1, pa2, ... or Sanity _id)'),
+    ],
+    keys: ['caption', 'image', 'albumId'],
+    titleKey: 'caption',
+    preview: 'image',
+    blank: { caption: '', image: '/images/event-63.jpg', albumId: '' },
+  },
+  videos: {
+    label: 'Videos',
+    icon: '🎬',
+    fields: [TEXT('Title'), TEXT('Year'), IMG('Thumbnail (YouTube/Facebook)'), TEXT('URL (YouTube or Facebook link)')],
+    keys: ['title', 'year', 'thumbnail', 'url'],
+    titleKey: 'title',
+    preview: 'thumbnail',
+    blank: { title: '', year: '', thumbnail: '', url: '' },
+  },
+}
+
+export const SETTINGS_FIELDS = [
+  { key: 'siteName', label: 'Site name', type: 'text' },
+  { key: 'tagline', label: 'Tagline (logo)', type: 'text' },
+  { key: 'phone', label: 'Phone (full)', type: 'text' },
+  { key: 'phoneShort', label: 'Phone (short)', type: 'text' },
+  { key: 'email', label: 'Email', type: 'text' },
+  { key: 'address', label: 'Address', type: 'text' },
+  { key: 'donateLabel', label: 'Donate button text', type: 'text' },
+  { key: 'facebook', label: 'Facebook URL', type: 'text' },
+  { key: 'twitter', label: 'Twitter/X URL', type: 'text' },
+  { key: 'youtube', label: 'YouTube URL', type: 'text' },
+  { key: 'instagram', label: 'Instagram URL', type: 'text' },
+  { key: 'tiktok', label: 'TikTok URL', type: 'text' },
+  { key: 'footerAbout', label: 'Footer description', type: 'textarea' },
+]
