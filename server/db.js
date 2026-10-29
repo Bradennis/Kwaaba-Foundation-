@@ -1,14 +1,15 @@
-import Database from 'better-sqlite3';
+import { createClient } from '@libsql/client';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// DB_PATH lets production point at a persistent disk (e.g. /var/data/kwaaba.db)
+// With TURSO_DATABASE_URL set (production) the data lives in Turso.
+// Without it (local dev) the same code reads the local SQLite file; DB_PATH overrides its location.
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'kwaaba.db');
 
-const COLLECTIONS = [
+export const COLLECTIONS = [
   'slides', 'stats', 'programs', 'board', 'team',
   'events', 'posts', 'gallery', 'newsletters', 'quotes',
   'about', 'founder', 'settings', 'photoAlbums', 'photos'
@@ -20,83 +21,72 @@ function safeName(name) {
   return '"' + name.replace(/"/g, '""') + '"';
 }
 
+const UPSERT = (collection) =>
+  `INSERT INTO ${safeName(collection)} (id, data, order_index, updated_at) VALUES (?, ?, ?, datetime('now'))
+   ON CONFLICT(id) DO UPDATE SET data=excluded.data, order_index=excluded.order_index, updated_at=datetime('now')`;
+
 export function getDb() {
   if (!_db) {
-    _db = new Database(DB_PATH);
-    _db.pragma('journal_mode = WAL');
+    _db = process.env.TURSO_DATABASE_URL
+      ? createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN })
+      : createClient({ url: pathToFileURL(DB_PATH).href });
   }
   return _db;
 }
 
-export function initDb() {
+export function describeDb() {
+  return process.env.TURSO_DATABASE_URL ? `Turso (${process.env.TURSO_DATABASE_URL})` : DB_PATH;
+}
+
+export async function initDb() {
   const db = getDb();
-  for (const collection of COLLECTIONS) {
-    db.exec(`CREATE TABLE IF NOT EXISTS ${safeName(collection)} (
+  await db.batch(COLLECTIONS.flatMap((collection) => [
+    `CREATE TABLE IF NOT EXISTS ${safeName(collection)} (
       id TEXT PRIMARY KEY,
       data TEXT NOT NULL,
       order_index INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
-    )`);
-    db.exec(`CREATE INDEX IF NOT EXISTS idx_${collection}_order ON ${safeName(collection)} (order_index)`);
-  }
-  console.log('Database initialized at', DB_PATH);
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_${collection}_order ON ${safeName(collection)} (order_index)`,
+  ]), 'write');
+  console.log('Database initialized at', describeDb());
 }
 
-export function upsertItem(collection, id, data, orderIndex = 0) {
-  const db = getDb();
-  const serialized = JSON.stringify(data);
-  const stmt = db.prepare(
-    `INSERT INTO ${safeName(collection)} (id, data, order_index, updated_at) VALUES (?, ?, ?, datetime('now'))
-     ON CONFLICT(id) DO UPDATE SET data=?, order_index=?, updated_at=datetime('now')`
+export async function upsertItem(collection, id, data, orderIndex = 0) {
+  const result = await getDb().execute({ sql: UPSERT(collection), args: [id, JSON.stringify(data), orderIndex] });
+  return { id, changes: result.rowsAffected };
+}
+
+export async function deleteItem(collection, id) {
+  const result = await getDb().execute({ sql: `DELETE FROM ${safeName(collection)} WHERE id = ?`, args: [id] });
+  return { changes: result.rowsAffected };
+}
+
+export async function getCollection(collection) {
+  const { rows } = await getDb().execute(`SELECT id, data, order_index FROM ${safeName(collection)} ORDER BY order_index ASC`);
+  return rows.map(row => ({ ...JSON.parse(row.data), id: row.id, order: Number(row.order_index) }));
+}
+
+export async function getAllContent() {
+  // One round trip for all collections — matters when the database is remote.
+  const results = await getDb().batch(
+    COLLECTIONS.map((collection) => `SELECT id, data FROM ${safeName(collection)} ORDER BY order_index ASC`),
+    'read'
   );
-  const result = stmt.run(id, serialized, orderIndex, serialized, orderIndex);
-  return { id, changes: result.changes };
+  const content = {};
+  COLLECTIONS.forEach((collection, i) => {
+    content[collection] = results[i].rows.map(row => ({ ...JSON.parse(row.data), id: row.id }));
+  });
+  return content;
 }
 
-export function deleteItem(collection, id) {
-  const db = getDb();
-  const result = db.prepare(`DELETE FROM ${safeName(collection)} WHERE id = ?`).run(id);
-  return { changes: result.changes };
-}
-
-export function getCollection(collection) {
-  const db = getDb();
-  const rows = db.prepare(`SELECT id, data, order_index FROM ${safeName(collection)} ORDER BY order_index ASC`).all();
-  return rows.map(row => ({ ...JSON.parse(row.data), id: row.id, order: row.order_index }));
-}
-
-export function getAllContent() {
-  const db = getDb();
-  const collections = [
-    'slides', 'stats', 'programs', 'board', 'team',
-    'events', 'posts', 'gallery', 'newsletters', 'quotes',
-    'about', 'founder', 'settings', 'photoAlbums', 'photos'
-  ];
-  const result = {};
-  for (const collection of collections) {
-    const rows = db.prepare(`SELECT id, data FROM ${safeName(collection)} ORDER BY order_index ASC`).all();
-    result[collection] = rows.map(row => ({ ...JSON.parse(row.data), id: row.id }));
-  }
-  return result;
-}
-
-export function upsertContent(data) {
-  const db = getDb();
-  const insert = db.prepare(
-    `INSERT INTO ${safeName('_table_placeholder_')} (id, data, order_index, updated_at) VALUES (?, ?, ?, datetime('now'))
-     ON CONFLICT(id) DO UPDATE SET data=?, order_index=?, updated_at=datetime('now')`
-  );
-
+export async function upsertContent(data) {
+  const statements = [];
   for (const [collection, items] of Object.entries(data)) {
-    for (let idx = 0; idx < items.length; idx++) {
-      const item = items[idx];
-      const serialized = JSON.stringify(item);
-      const stmt = db.prepare(
-        `INSERT INTO ${safeName(collection)} (id, data, order_index, updated_at) VALUES (?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET data=?, order_index=?, updated_at=datetime('now')`
-      );
-      stmt.run(item.id, serialized, idx, serialized, idx);
-    }
+    items.forEach((item, idx) => {
+      statements.push({ sql: UPSERT(collection), args: [item.id, JSON.stringify(item), idx] });
+    });
   }
+  if (statements.length) await getDb().batch(statements, 'write');
 }

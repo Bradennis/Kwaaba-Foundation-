@@ -28,7 +28,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Initialize database
-initDb();
+await initDb();
 
 // Routes
 app.use('/api', contentRoutes);

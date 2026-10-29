@@ -18,6 +18,7 @@ client/dist/
 kwaaba.db
 kwaaba.db-shm
 kwaaba.db-wal
+kwaaba.backup-*.db*
 
 # IDE
 .vscode/

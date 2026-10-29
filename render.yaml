@@ -24,3 +24,8 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # Turso database (data must live outside Render — its free disk is wiped on every deploy)
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false

@@ -150,9 +150,13 @@ ADMIN_PASSWORD=your-secure-password
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
+TURSO_DATABASE_URL=libsql://your-db.turso.io
+TURSO_AUTH_TOKEN=your-turso-token
 ```
 
-Enable **persistent storage** for the SQLite database file.
+The content database lives in [Turso](https://turso.tech) (hosted SQLite), so the server needs no persistent disk.
+Without `TURSO_DATABASE_URL` the server uses the local `kwaaba.db` file instead (handy for local dev).
+To copy the local database into Turso: add the two `TURSO_*` values to `server/.env`, then `cd server && npm run db:push`.
 
 ## Brand palette
 
